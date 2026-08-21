@@ -1,4 +1,8 @@
+import os
 from flask import Flask, render_template
+
+template_dir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(__name__, template_folder=template_dir + '/templates', static_folder=template_dir + '/static')
 
 app = Flask(__name__)
 

@@ -102,10 +102,10 @@ body {
 }
 
 /* ==========================================
-   SEÇÃO DE IMÓVEIS & SCROLL HORIZONTAL
+   SEÇÃO DE IMÓVEIS & CARROSSEL (4 POR PÁGINA)
    ========================================== */
 .content-section {
-    padding: 30px 0 10px 24px; /* Removido o padding direito para o scroll ir até a borda */
+    padding: 30px 0 10px 24px;
 }
 
 .section-title {
@@ -127,43 +127,55 @@ body {
     font-weight: 400;
 }
 
-/* Container do Scroll Horizontal (Passo 2) */
+/* Container do carrossel horizontal */
 .property-scroll {
     width: 100%;
     overflow-x: auto;
     padding-bottom: 15px;
     padding-right: 24px;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Oculta a barra de rolagem no Firefox */
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory; 
 }
 
 .property-scroll::-webkit-scrollbar {
-    display: none; /* Oculta a barra de rolagem no Chrome/Safari */
+    display: none;
 }
 
 .property-grid {
     display: flex;
-    gap: 16px;
+    gap: 24px;
     width: max-content;
 }
 
+/* Cada página agrupa exatamente 4 cards (Grid 2x2) */
+.property-page {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 12px;
+    width: calc(420px - 48px);
+    flex-shrink: 0;
+    scroll-snap-align: start;
+}
+
+/* Card individual */
 .property-card {
-    width: 260px; /* Largura fixa para cada card no modo scroll */
-    height: 240px;
-    border-radius: 16px;
+    width: 100%;
+    height: 180px;
+    border-radius: 14px;
     background-size: cover;
     background-position: center;
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
 }
 
 .card-overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(180deg, transparent 40%, rgba(20, 10, 10, 0.95) 100%);
-    padding: 16px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -172,37 +184,37 @@ body {
 
 .card-overlay h3 {
     font-family: 'Georgia', serif;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 400;
-    line-height: 1.2;
-    margin-bottom: 8px;
+    line-height: 1.1;
+    margin-bottom: 4px;
 }
 
 .card-divider {
     width: 100%;
     height: 1px;
     background-color: rgba(255, 255, 255, 0.3);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .card-overlay .price {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .card-overlay .location {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 300;
     opacity: 0.9;
 }
 
 .arrow-btn {
     position: absolute;
-    right: 12px;
-    bottom: 12px;
-    width: 32px;
-    height: 32px;
+    right: 8px;
+    bottom: 8px;
+    width: 24px;
+    height: 24px;
     background-color: #5c181b;
     border-radius: 50%;
     display: flex;
@@ -210,7 +222,45 @@ body {
     justify-content: center;
     color: #ffffff;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 10px;
+}
+
+/* ==========================================
+   GRID ESTÁTICO (4 ou menos imóveis)
+   ========================================== */
+.property-grid-estatico {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding-right: 24px;
+}
+
+.property-grid-estatico .property-card {
+    height: 180px;
+}
+
+/* ==========================================
+   INDICADORES DE PONTINHOS DO CARROSSEL
+   ========================================== */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding-right: 24px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #d1cbd4;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.dot.active {
+    background-color: #5c181b;
+    transform: scale(1.2);
 }
 
 /* ==========================================

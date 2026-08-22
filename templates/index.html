@@ -4,26 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ perfil.nome }} - {{ perfil.corretora }}</title>
-    <!-- Versão atualizada do CSS para forçar o navegador a atualizar -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=14">
-    
-    <!-- Font Awesome para os ícones -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=17">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="card-container">
         
-        <!-- Header (Foto com degradê vinho e corte arredondado) -->
+        <!-- Header -->
         <header class="hero-section" style="--bg-url: url('{{ url_for('static', filename=perfil.foto) }}');">
-            
             <div class="top-bar">
-                <!-- Logo Nova Branca -->
                 <div class="logo-remax">
                     <img src="{{ url_for('static', filename='logobranca.png') }}" alt="RE/MAX Conceição Queiroz" class="logo-topo">
                 </div>
             </div>
 
-            <!-- Textos laterais -->
             <div class="profile-info">
                 <h1>Conceição<br>Queiroz</h1>
                 <div class="gold-line"></div>
@@ -38,11 +32,38 @@
                 <h2>Imóveis disponíveis</h2>
             </div>
 
-            <!-- Container preparado para scroll horizontal (Passo 2) -->
-            <div class="property-scroll">
-                <div class="property-grid">
+            {% if imoveis | length > 4 %}
+                <div class="property-scroll" id="propertyScroll">
+                    <div class="property-grid">
+                        {% for pagina in imoveis | batch(4) %}
+                        <div class="property-page">
+                            {% for imovel in pagina %}
+                            <!-- Verifica se a imagem é um link externo ou um upload local -->
+                            {% set bg_img = imovel.imagem if imovel.imagem.startswith('http') else url_for('static', filename=imovel.imagem) %}
+                            <div class="property-card" style="background-image: url('{{ bg_img }}');">
+                                <div class="card-overlay">
+                                    <h3>{{ imovel.titulo }}</h3>
+                                    <div class="card-divider"></div>
+                                    <p class="price">{{ imovel.preco }}</p>
+                                    <p class="location">{{ imovel.localizacao }}</p>
+                                    <a href="{{ imovel.link }}" class="arrow-btn" aria-label="Ver {{ imovel.titulo }}">
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="carousel-dots" id="carouselDots"></div>
+
+            {% else %}
+                <div class="property-grid-estatico">
                     {% for imovel in imoveis %}
-                    <div class="property-card" style="background-image: url('{{ imovel.imagem }}');">
+                    {% set bg_img = imovel.imagem if imovel.imagem.startswith('http') else url_for('static', filename=imovel.imagem) %}
+                    <div class="property-card" style="background-image: url('{{ bg_img }}');">
                         <div class="card-overlay">
                             <h3>{{ imovel.titulo }}</h3>
                             <div class="card-divider"></div>
@@ -55,38 +76,63 @@
                     </div>
                     {% endfor %}
                 </div>
-            </div>
+            {% endif %}
         </main>
 
-        <!-- Rodapé de Ações (Instagram antes do WhatsApp) -->
+        <!-- Rodapé de Ações -->
         <footer class="action-bar">
             <a href="https://wa.me/5598991936778" target="_blank" class="action-item">
                 <i class="fa-brands fa-whatsapp icon"></i>
                 <span>WhatsApp</span>
             </a>
-            
             <div class="vertical-divider"></div>
-            
             <a href="https://www.instagram.com/conceicaoqueirozz_/" target="_blank" class="action-item">
                 <i class="fa-brands fa-instagram icon"></i>
                 <span>Instagram</span>
             </a>
-            
             <div class="vertical-divider"></div>
-            
             <a href="https://www.remax.com.br/conceicaoqueiroz" target="_blank" class="action-item">
                 <i class="fa-solid fa-globe icon"></i>
                 <span>Website</span>
             </a>
-            
             <div class="vertical-divider"></div>
-            
             <a href="#" class="action-item">
                 <i class="fa-solid fa-share-nodes icon"></i>
                 <span>Compartilhar</span>
             </a>
         </footer>
-
     </div>
+
+    <script>
+        const scrollContainer = document.getElementById('propertyScroll');
+        const dotsContainer = document.getElementById('carouselDots');
+        
+        if (scrollContainer && dotsContainer) {
+            const pages = scrollContainer.querySelectorAll('.property-page');
+            
+            pages.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if (index === 0) dot.classList.add('active');
+                dotsContainer.appendChild(dot);
+            });
+
+            const dots = dotsContainer.querySelectorAll('.dot');
+
+            scrollContainer.addEventListener('scroll', () => {
+                const pageWidth = scrollContainer.clientWidth;
+                const scrollPosition = scrollContainer.scrollLeft;
+                const activeIndex = Math.round(scrollPosition / pageWidth);
+
+                dots.forEach((dot, index) => {
+                    if (index === activeIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            });
+        }
+    </script>
 </body>
 </html>

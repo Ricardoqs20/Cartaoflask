@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel Administrativo</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header-admin { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { color: #5c181b; margin: 0; }
+        .btn-sair { color: #d9534f; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { grid-column: span 2; padding: 12px; background: #5c181b; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .btn-edit { color: #0275d8; text-decoration: none; font-weight: bold; margin-right: 10px; }
+        .btn-del { color: #d9534f; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-admin">
+            <h2>Gestão de Imóveis</h2>
+            <a href="/admin/logout" class="btn-sair">Sair do Painel</a>
+        </div>
+        
+        <form action="/admin/novo" method="POST" enctype="multipart/form-data" class="form-grid">
+            <input type="text" name="titulo" placeholder="Título do Imóvel" required>
+            <input type="text" id="preco_input" name="preco_num" placeholder="Preço (ex: 320000)" required oninput="mascaraMoeda(this)">
+            <input type="text" name="localizacao" placeholder="Localização" required>
+            <input type="text" name="link" placeholder="Link (WhatsApp)" required>
+            <input type="file" name="imagem_arquivo" accept="image/*" required style="grid-column: span 2;">
+            <button type="submit">Adicionar Novo Imóvel</button>
+        </form>
+
+        <table>
+            <thead><tr><th>Título</th><th>Preço</th><th>Ações</th></tr></thead>
+            <tbody>
+                {% for imovel in imoveis %}
+                <tr>
+                    <td>{{ imovel.titulo }}</td>
+                    <td>{{ imovel.preco }}</td>
+                    <td>
+                        <a href="/admin/editar/{{ imovel.id }}" class="btn-edit">Editar</a>
+                        <a href="/admin/excluir/{{ imovel.id }}" class="btn-del" onclick="return confirm('Excluir este imóvel?')">Excluir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br><a href="/" style="color: #5c181b; text-decoration: none; font-weight: bold;">← Ver site público</a>
+    </div>
+
+    <!-- Script de formatação de preço com pontos em tempo real -->
+    <script>
+        function mascaraMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            if (valor === "") {
+                input.value = "";
+                return;
+            }
+            let numero = Number(valor);
+            input.value = numero.toLocaleString('pt-BR');
+        }
+    </script>
+</body>
+</html>

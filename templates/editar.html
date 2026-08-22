@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Imóvel</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #5c181b; margin-top: 0; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #5c181b; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-voltar { display: block; text-align: center; margin-top: 15px; color: #5c181b; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Editar Imóvel</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Título:</label>
+                <input type="text" name="titulo" value="{{ imovel.titulo }}" required>
+            </div>
+            <div class="form-group">
+                <label>Preço (Apenas números):</label>
+                <input type="text" id="preco_input" name="preco_num" value="{{ imovel.preco_num | int }}" required oninput="mascaraMoeda(this)">
+            </div>
+            <div class="form-group">
+                <label>Localização:</label>
+                <input type="text" name="localizacao" value="{{ imovel.localizacao }}" required>
+            </div>
+            <div class="form-group">
+                <label>Trocar Foto (Opcional):</label>
+                <input type="file" name="imagem_arquivo" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Link (WhatsApp):</label>
+                <input type="text" name="link" value="{{ imovel.link }}" required>
+            </div>
+            <button type="submit">Salvar Alterações</button>
+        </form>
+        <a href="/admin" class="btn-voltar">← Voltar para o painel</a>
+    </div>
+
+    <script>
+        function mascaraMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            if (valor === "") {
+                input.value = "";
+                return;
+            }
+            let numero = Number(valor);
+            input.value = numero.toLocaleString('pt-BR');
+        }
+    </script>
+</body>
+</html>

@@ -1,57 +1,129 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, session
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 
+# Configuração de caminhos
 template_dir = os.path.abspath(os.path.dirname(__file__))
-app = Flask(__name__, template_folder=template_dir + '/templates', static_folder=template_dir + '/static')
+app = Flask(__name__, template_folder=os.path.join(template_dir, 'templates'), static_folder=os.path.join(template_dir, 'static'))
+app.secret_key = 'chave_secreta_super_segura'  # Necessário para controlar o login da senha
 
-app = Flask(__name__)
+# Configuração de Uploads
+UPLOAD_FOLDER = os.path.join(template_dir, 'static', 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# Banco de Dados
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///imoveis.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Imovel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=False)
+    preco_num = db.Column(db.Float, nullable=False)
+    preco = db.Column(db.String(50), nullable=False)
+    localizacao = db.Column(db.String(100), nullable=False)
+    imagem = db.Column(db.String(250), nullable=False)
+    link = db.Column(db.String(250), nullable=False)
+
+with app.app_context():
+    db.create_all()
 
 @app.route("/")
 def index():
-    perfil = {
-        "nome": "Conceição Queiroz",
-        "corretora": "RE/MAX DREAMS",
-        "subtitulo": "Conduzo decisões imobiliárias com clareza, segurança e confiança.",
-        "foto": "corretora.png"  # Certifique-se de que a foto está na pasta /static
-    }
-
-    imoveis = [
-        {
-            "id": 1,
-            "titulo": "Apartamento no Renascença",
-            "preco": "R$ 1.750.000",
-            "localizacao": "São Luís, MA",
-            "imagem": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop",
-            "link": "#"
-        },
-        {
-            "id": 2,
-            "titulo": "Casa no Araçagy",
-            "preco": "R$ 1.850.000",
-            "localizacao": "São Luís, MA",
-            "imagem": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop",
-            "link": "#"
-        },
-        {
-            "id": 3,
-            "titulo": "Cobertura na Península",
-            "preco": "R$ 3.200.000",
-            "localizacao": "São Luís, MA",
-            "imagem": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800&auto=format&fit=crop",
-            "link": "#"
-        },
-        {
-            "id": 4,
-            "titulo": "Mansão no Calhau",
-            "preco": "R$ 4.500.000",
-            "localizacao": "São Luís, MA",
-            "imagem": "https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=800&auto=format&fit=crop",
-            "link": "#"
-        }
-    ]
-
+    imoveis = Imovel.query.order_by(Imovel.preco_num.desc()).all()
+    perfil = {"nome": "Conceição Queiroz", "corretora": "RE/MAX DREAMS", "subtitulo": "Conduzo decisões imobiliárias.", "foto": "corretora.png"}
     return render_template("index.html", perfil=perfil, imoveis=imoveis)
 
+# --- SISTEMA DE LOGIN DO ADMIN ---
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    erro = None
+    if request.method == "POST":
+        senha = request.form.get("senha")
+        if senha == "cq310584":
+            session['admin_logado'] = True
+            return redirect(url_for("admin_painel"))
+        else:
+            erro = "Senha incorreta!"
+    return render_template("login.html", erro=erro)
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop('admin_logado', None)
+    return redirect(url_for("admin_login"))
+
+# --- PAINEL ADMINISTRATIVO ---
+@app.route("/admin")
+def admin_painel():
+    if not session.get('admin_logado'):
+        return redirect(url_for("admin_login"))
+    imoveis = Imovel.query.order_by(Imovel.id.desc()).all()
+    return render_template("admin.html", imoveis=imoveis)
+
+# --- CADASTRAR NOVO IMÓVEL ---
+@app.route("/admin/novo", methods=["POST"])
+def novo_imovel():
+    if not session.get('admin_logado'): return redirect(url_for("admin_login"))
+    
+    titulo = request.form.get("titulo")
+    preco_limpo = request.form.get("preco_num").replace(".", "").replace(",", "")
+    preco_num = float(preco_limpo) if preco_limpo else 0.0
+    preco_formatado = f"R$ {int(preco_num):,}".replace(",", ".")
+    localizacao = request.form.get("localizacao")
+    link = request.form.get("link")
+
+    file = request.files.get('imagem_arquivo')
+    if file and file.filename != '':
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        imagem_path = f"uploads/{filename}"
+    else:
+        imagem_path = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop"
+
+    novo = Imovel(titulo=titulo, preco_num=preco_num, preco=preco_formatado, localizacao=localizacao, imagem=imagem_path, link=link)
+    db.session.add(novo)
+    db.session.commit()
+    return redirect(url_for("admin_painel"))
+
+# --- EDITAR IMÓVEL ---
+@app.route("/admin/editar/<int:id>", methods=["GET", "POST"])
+def editar_imovel(id):
+    if not session.get('admin_logado'): return redirect(url_for("admin_login"))
+    imovel = Imovel.query.get_or_404(id)
+
+    if request.method == "POST":
+        imovel.titulo = request.form.get("titulo")
+        preco_limpo = request.form.get("preco_num").replace(".", "").replace(",", "")
+        imovel.preco_num = float(preco_limpo) if preco_limpo else 0.0
+        imovel.preco = f"R$ {int(imovel.preco_num):,}".replace(",", ".")
+        imovel.localizacao = request.form.get("localizacao")
+        imovel.link = request.form.get("link")
+
+        file = request.files.get('imagem_arquivo')
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            imovel.imagem = f"uploads/{filename}"
+
+        db.session.commit()
+        return redirect(url_for("admin_painel"))
+
+    return render_template("editar.html", imovel=imovel)
+
+# --- EXCLUIR IMÓVEL ---
+@app.route("/admin/excluir/<int:id>")
+def excluir_imovel(id):
+    if not session.get('admin_logado'): return redirect(url_for("admin_login"))
+    imovel = Imovel.query.get_or_404(id)
+    if imovel.imagem.startswith('uploads/'):
+        path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(imovel.imagem))
+        if os.path.exists(path): os.remove(path)
+    db.session.delete(imovel)
+    db.session.commit()
+    return redirect(url_for("admin_painel"))
+
 if __name__ == '__main__':
-    # O host='0.0.0.0' diz ao Python para liberar o acesso na rede Wi-Fi
     app.run(host='0.0.0.0', port=5000, debug=True)

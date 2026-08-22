@@ -1,20 +1,18 @@
 import os
+import uuid
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
-# Configuração de caminhos
 template_dir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__, template_folder=os.path.join(template_dir, 'templates'), static_folder=os.path.join(template_dir, 'static'))
-app.secret_key = 'chave_secreta_super_segura'  # Necessário para controlar o login da senha
+app.secret_key = 'chave_secreta_super_segura'
 
-# Configuração de Uploads
 UPLOAD_FOLDER = os.path.join(template_dir, 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Banco de Dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///imoveis.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -37,7 +35,6 @@ def index():
     perfil = {"nome": "Conceição Queiroz", "corretora": "RE/MAX DREAMS", "subtitulo": "Conduzo decisões imobiliárias.", "foto": "corretora.png"}
     return render_template("index.html", perfil=perfil, imoveis=imoveis)
 
-# --- SISTEMA DE LOGIN DO ADMIN ---
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     erro = None
@@ -55,7 +52,6 @@ def admin_logout():
     session.pop('admin_logado', None)
     return redirect(url_for("admin_login"))
 
-# --- PAINEL ADMINISTRATIVO ---
 @app.route("/admin")
 def admin_painel():
     if not session.get('admin_logado'):
@@ -63,32 +59,36 @@ def admin_painel():
     imoveis = Imovel.query.order_by(Imovel.id.desc()).all()
     return render_template("admin.html", imoveis=imoveis)
 
-# --- CADASTRAR NOVO IMÓVEL ---
-@app.route("/admin/novo", methods=["POST"])
-def novo_imovel():
+@app.route("/admin/adicionar", methods=["GET", "POST"])
+def adicionar_imovel():
     if not session.get('admin_logado'): return redirect(url_for("admin_login"))
     
-    titulo = request.form.get("titulo")
-    preco_limpo = request.form.get("preco_num").replace(".", "").replace(",", "")
-    preco_num = float(preco_limpo) if preco_limpo else 0.0
-    preco_formatado = f"R$ {int(preco_num):,}".replace(",", ".")
-    localizacao = request.form.get("localizacao")
-    link = request.form.get("link")
+    if request.method == "POST":
+        titulo = request.form.get("titulo")
+        preco_limpo = request.form.get("preco_num").replace(".", "").replace(",", "")
+        preco_num = float(preco_limpo) if preco_limpo else 0.0
+        preco_formatado = f"R$ {int(preco_num):,}".replace(",", ".")
+        localizacao = request.form.get("localizacao")
+        link = request.form.get("link")
 
-    file = request.files.get('imagem_arquivo')
-    if file and file.filename != '':
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        imagem_path = f"uploads/{filename}"
-    else:
-        imagem_path = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop"
+        file = request.files.get('imagem_arquivo')
+        if file and file.filename != '':
+            # Gera um nome totalmente único usando UUID para evitar conflitos/sobrescritas
+            extensao = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+            filename = f"{uuid.uuid4()}.{extensao}"
+            
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            imagem_path = f"uploads/{filename}"
+        else:
+            imagem_path = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop"
 
-    novo = Imovel(titulo=titulo, preco_num=preco_num, preco=preco_formatado, localizacao=localizacao, imagem=imagem_path, link=link)
-    db.session.add(novo)
-    db.session.commit()
-    return redirect(url_for("admin_painel"))
+        novo = Imovel(titulo=titulo, preco_num=preco_num, preco=preco_formatado, localizacao=localizacao, imagem=imagem_path, link=link)
+        db.session.add(novo)
+        db.session.commit()
+        return redirect(url_for("admin_painel"))
 
-# --- EDITAR IMÓVEL ---
+    return render_template("adicionar.html")
+
 @app.route("/admin/editar/<int:id>", methods=["GET", "POST"])
 def editar_imovel(id):
     if not session.get('admin_logado'): return redirect(url_for("admin_login"))
@@ -104,7 +104,10 @@ def editar_imovel(id):
 
         file = request.files.get('imagem_arquivo')
         if file and file.filename != '':
-            filename = secure_filename(file.filename)
+            # Também gera um nome único para a edição
+            extensao = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+            filename = f"{uuid.uuid4()}.{extensao}"
+            
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             imovel.imagem = f"uploads/{filename}"
 
@@ -113,7 +116,6 @@ def editar_imovel(id):
 
     return render_template("editar.html", imovel=imovel)
 
-# --- EXCLUIR IMÓVEL ---
 @app.route("/admin/excluir/<int:id>")
 def excluir_imovel(id):
     if not session.get('admin_logado'): return redirect(url_for("admin_login"))

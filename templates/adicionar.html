@@ -3,61 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Editar Imóvel</title>
-    <!-- Cropper CSS -->
+    <title>Adicionar Imóvel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; padding: 15px; margin: 0; }
         .container { width: 100%; max-width: 500px; margin: 0 auto; background: white; padding: 25px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         h2 { color: #5c181b; margin-top: 0; text-align: center; font-size: 22px; }
-        
         .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
         label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333; }
         input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; width: 100%; }
-        
-        /* PREVIEW COMPACTO */
-        .foto-preview-box { display: flex; justify-content: center; margin-bottom: 10px; }
-        #img_atual { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-        /* ÁREA DE CORTE */
         .crop-container { display: none; width: 100%; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
         .crop-wrapper { width: 100%; max-height: 400px; overflow: hidden; margin-bottom: 15px; border-radius: 8px; }
         #image-to-crop { max-width: 100%; display: block; }
-
-        /* BOTÕES MODERNIZADOS */
         button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; transition: 0.2s; }
-        
         .btn-salvar { background: #5c181b; color: white; margin-top: 10px; }
-        .btn-salvar:active { background: #421113; }
-        
-        .btn-confirmar { 
-            background: #222; 
-            color: #fff; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            font-size: 13px;
-        }
-        .btn-confirmar:active { background: #000; transform: scale(0.98); }
-
+        .btn-confirmar { background: #222; color: #fff; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; }
         .btn-voltar { display: block; text-align: center; margin-top: 20px; color: #5c181b; text-decoration: none; font-size: 14px; font-weight: 500; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Editar Imóvel</h2>
-        <form id="form-editar" method="POST" enctype="multipart/form-data">
+        <h2>Novo Imóvel</h2>
+        <form id="form-adicionar" method="POST" enctype="multipart/form-data">
             
             <div class="form-group">
-                <label>Foto Atual:</label>
-                <div class="foto-preview-box">
-                    <img id="img_atual" src="/static/{{ imovel.imagem }}" alt="Foto do Imóvel">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Trocar Foto (Opcional):</label>
-                <input type="file" id="input_foto" accept="image/*" onclick="this.value=null;" onchange="iniciarCropperEdit(event)">
+                <label>Foto do Imóvel:</label>
+                <input type="file" id="input_foto" accept="image/*" required onchange="iniciarCropperAdd(event)">
             </div>
 
             <div class="crop-container" id="cropBox">
@@ -69,25 +41,25 @@
 
             <div class="form-group">
                 <label>Título:</label>
-                <input type="text" name="titulo" value="{{ imovel.titulo }}" required>
+                <input type="text" name="titulo" required>
             </div>
             
             <div class="form-group">
                 <label>Preço:</label>
-                <input type="text" id="preco_input" name="preco_num" value="{{ imovel.preco_num | int }}" required oninput="mascaraMoeda(this)">
+                <input type="text" id="preco_input" name="preco_num" required oninput="mascaraMoeda(this)">
             </div>
             
             <div class="form-group">
                 <label>Localização:</label>
-                <input type="text" name="localizacao" value="{{ imovel.localizacao }}" required>
+                <input type="text" name="localizacao" required>
             </div>
             
             <div class="form-group">
                 <label>Link:</label>
-                <input type="text" name="link" value="{{ imovel.link }}" required>
+                <input type="text" name="link" required>
             </div>
 
-            <button type="submit" class="btn-salvar">Salvar Alterações</button>
+            <button type="submit" class="btn-salvar">Cadastrar Imóvel</button>
         </form>
         <a href="/admin" class="btn-voltar">← Voltar para o painel</a>
     </div>
@@ -103,7 +75,7 @@
             input.value = Number(valor).toLocaleString('pt-BR');
         }
 
-        function iniciarCropperEdit(event) {
+        function iniciarCropperAdd(event) {
             const file = event.target.files[0];
             if (!file) return;
             
@@ -111,7 +83,6 @@
             reader.onload = function(e) {
                 const imgCrop = document.getElementById('image-to-crop');
                 const cropBox = document.getElementById('cropBox');
-                
                 cropBox.style.display = 'block';
                 
                 if (cropper) {
@@ -131,7 +102,6 @@
                         cropBoxResizable: false
                     });
                 };
-                
                 imgCrop.src = e.target.result;
             };
             reader.readAsDataURL(file);
@@ -139,25 +109,24 @@
 
         document.getElementById('btn-confirmar-corte').addEventListener('click', function() {
             if (!cropper) return;
-
             cropper.getCroppedCanvas({width: 800, height: 800}).toBlob(function(blob) {
                 imagemCortadaBlob = blob;
-                document.getElementById('img_atual').src = URL.createObjectURL(blob);
                 document.getElementById('cropBox').style.display = 'none';
-                
                 cropper.destroy();
                 cropper = null;
             }, 'image/jpeg', 0.9);
         });
 
-        document.getElementById('form-editar').addEventListener('submit', function(e) {
+        document.getElementById('form-adicionar').addEventListener('submit', function(e) {
             e.preventDefault();
+            if (!imagemCortadaBlob) {
+                alert('Por favor, selecione e corte a imagem do imóvel.');
+                return;
+            }
+
             const formData = new FormData(this);
             formData.delete('input_foto');
-            
-            if (imagemCortadaBlob) {
-                formData.append('imagem_arquivo', imagemCortadaBlob, 'imovel_cortado.jpg');
-            }
+            formData.append('imagem_arquivo', imagemCortadaBlob, 'imovel_cortado.jpg');
 
             fetch(window.location.href, {
                 method: 'POST',

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ perfil.nome }} - {{ perfil.corretora }}</title>
-    <!-- Atualizei a versão do CSS para garantir que o navegador leia o novo arquivo -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=12">
+    <!-- Versão atualizada do CSS para forçar o navegador a atualizar -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=14">
     
     <!-- Font Awesome para os ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -17,15 +17,10 @@
         <header class="hero-section" style="--bg-url: url('{{ url_for('static', filename=perfil.foto) }}');">
             
             <div class="top-bar">
-                <!-- Logo RE/MAX DREAMS com a imagem do balão -->
+                <!-- Logo Nova Branca -->
                 <div class="logo-remax">
-                    <img src="{{ url_for('static', filename='balao.png') }}" alt="Balão RE/MAX" class="custom-balloon">
-                    <div class="logo-text">
-                        <strong class="red-text">RE<span class="slash">/</span>MAX</strong>
-                        <small class="blue-text">DREAMS</small>
-                    </div>
+                    <img src="{{ url_for('static', filename='logobranca.png') }}" alt="RE/MAX Conceição Queiroz" class="logo-topo">
                 </div>
-                <!-- O botão de menu foi removido -->
             </div>
 
             <!-- Textos laterais -->
@@ -43,24 +38,27 @@
                 <h2>Imóveis disponíveis</h2>
             </div>
 
-            <div class="property-grid">
-                {% for imovel in imoveis %}
-                <div class="property-card" style="background-image: url('{{ imovel.imagem }}');">
-                    <div class="card-overlay">
-                        <h3>{{ imovel.titulo }}</h3>
-                        <div class="card-divider"></div>
-                        <p class="price">{{ imovel.preco }}</p>
-                        <p class="location">{{ imovel.localizacao }}</p>
-                        <a href="{{ imovel.link }}" class="arrow-btn" aria-label="Ver {{ imovel.titulo }}">
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
+            <!-- Container preparado para scroll horizontal (Passo 2) -->
+            <div class="property-scroll">
+                <div class="property-grid">
+                    {% for imovel in imoveis %}
+                    <div class="property-card" style="background-image: url('{{ imovel.imagem }}');">
+                        <div class="card-overlay">
+                            <h3>{{ imovel.titulo }}</h3>
+                            <div class="card-divider"></div>
+                            <p class="price">{{ imovel.preco }}</p>
+                            <p class="location">{{ imovel.localizacao }}</p>
+                            <a href="{{ imovel.link }}" class="arrow-btn" aria-label="Ver {{ imovel.titulo }}">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </main>
 
-        <!-- Rodapé de Ações -->
+        <!-- Rodapé de Ações (Instagram antes do WhatsApp) -->
         <footer class="action-bar">
             <a href="https://wa.me/5598991936778" target="_blank" class="action-item">
                 <i class="fa-brands fa-whatsapp icon"></i>

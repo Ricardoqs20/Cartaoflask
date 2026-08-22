@@ -29,7 +29,7 @@
             <input type="text" name="titulo" placeholder="Título do Imóvel" required>
             <input type="text" id="preco_input" name="preco_num" placeholder="Preço (ex: 320000)" required oninput="mascaraMoeda(this)">
             <input type="text" name="localizacao" placeholder="Localização" required>
-            <input type="text" name="link" placeholder="Link (WhatsApp)" required>
+            <input type="text" name="link" placeholder="Link" required>
             <input type="file" name="imagem_arquivo" accept="image/*" required style="grid-column: span 2;">
             <button type="submit">Adicionar Novo Imóvel</button>
         </form>
@@ -52,7 +52,6 @@
         <br><a href="/" style="color: #5c181b; text-decoration: none; font-weight: bold;">← Ver site público</a>
     </div>
 
-    <!-- Script de formatação de preço com pontos em tempo real -->
     <script>
         function mascaraMoeda(input) {
             let valor = input.value.replace(/\D/g, '');

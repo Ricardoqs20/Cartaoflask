@@ -1,6 +1,6 @@
 import os
 import uuid
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, make_response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
@@ -56,8 +56,15 @@ def admin_logout():
 def admin_painel():
     if not session.get('admin_logado'):
         return redirect(url_for("admin_login"))
+    
     imoveis = Imovel.query.order_by(Imovel.id.desc()).all()
-    return render_template("admin.html", imoveis=imoveis)
+    
+    # Impede que o navegador guarde cache da página protegida, forçando o pedido de senha
+    response = make_response(render_template("admin.html", imoveis=imoveis))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.route("/admin/adicionar", methods=["GET", "POST"])
 def adicionar_imovel():
@@ -73,7 +80,6 @@ def adicionar_imovel():
 
         file = request.files.get('imagem_arquivo')
         if file and file.filename != '':
-            # Gera um nome totalmente único usando UUID para evitar conflitos/sobrescritas
             extensao = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
             filename = f"{uuid.uuid4()}.{extensao}"
             
@@ -104,7 +110,6 @@ def editar_imovel(id):
 
         file = request.files.get('imagem_arquivo')
         if file and file.filename != '':
-            # Também gera um nome único para a edição
             extensao = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
             filename = f"{uuid.uuid4()}.{extensao}"
             

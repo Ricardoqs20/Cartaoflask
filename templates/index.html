@@ -96,45 +96,50 @@
                 <span>Website</span>
             </a>
             <div class="vertical-divider"></div>
-            <!-- Botão de Compartilhar -->
-            <a href="javascript:void(0);" onclick="compartilharSite()" class="action-item">
+            
+            <!-- Botão de Compartilhar (sem href) -->
+            <a onclick="compartilharSite(event)" class="action-item" style="cursor: pointer;">
                 <i class="fa-solid fa-share-nodes icon"></i>
                 <span>Compartilhar</span>
             </a>
+            
         </footer>
     </div>
 
     <script>
         // Função de Compartilhamento Definitiva
-        function compartilharSite() {
-            const urlAtual = window.location.href;
+        function compartilharSite(event) {
+            // Evita qualquer comportamento padrão do HTML (como adicionar o #)
+            if (event) event.preventDefault();
 
-            // 1. Se o navegador suportar o menu nativo de compartilhamento (Celulares modernos)
+            // Pega o link da página, mas tira qualquer "#" que já esteja lá
+            const urlAtual = window.location.href.split('#')[0];
+
             if (navigator.share) {
                 navigator.share({
                     title: 'Cartão Digital - Conceição Queiroz',
                     text: 'Confira o meu cartão de visitas digital!',
                     url: urlAtual
-                }).catch((error) => {
+                }).catch(function(error) {
                     console.log('Compartilhamento cancelado', error);
                 });
             } else {
-                // 2. Método ultra-compatível de cópia (Cria um campo invisível, seleciona e copia)
-                const aux = document.createElement("input");
-                aux.setAttribute("value", urlAtual);
-                document.body.appendChild(aux);
-                aux.select();
-                aux.setSelectionRange(0, 99999); // Para dispositivos móveis
+                // Cria um campo falso para forçar a cópia
+                const inputFalso = document.createElement("input");
+                inputFalso.value = urlAtual;
+                document.body.appendChild(inputFalso);
+                
+                inputFalso.select();
+                inputFalso.setSelectionRange(0, 99999); // Para iPhone/Android
                 
                 try {
                     document.execCommand("copy");
                     alert("Link copiado para a área de transferência!");
                 } catch (err) {
-                    // 3. Se falhar por completo, abre o prompt para o usuário copiar manualmente
                     prompt("Copie o link abaixo:", urlAtual);
                 }
                 
-                document.body.removeChild(aux);
+                document.body.removeChild(inputFalso);
             }
         }
 

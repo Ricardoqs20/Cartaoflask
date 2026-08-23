@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ perfil.nome }} - {{ perfil.corretora }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=18">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -38,7 +38,6 @@
                         {% for pagina in imoveis | batch(4) %}
                         <div class="property-page">
                             {% for imovel in pagina %}
-                            <!-- Verifica se a imagem é um link externo ou um upload local -->
                             {% set bg_img = imovel.imagem if imovel.imagem.startswith('http') else url_for('static', filename=imovel.imagem) %}
                             <div class="property-card" style="background-image: url('{{ bg_img }}');">
                                 <div class="card-overlay">
@@ -97,8 +96,8 @@
             </a>
             <div class="vertical-divider"></div>
             
-            <!-- Botão de Compartilhar (sem href) -->
-            <a onclick="compartilharSite(event)" class="action-item" style="cursor: pointer;">
+            <!-- Botão de Compartilhar -->
+            <a id="btnShare" class="action-item" style="cursor: pointer;">
                 <i class="fa-solid fa-share-nodes icon"></i>
                 <span>Compartilhar</span>
             </a>
@@ -107,72 +106,76 @@
     </div>
 
     <script>
-        // Função de Compartilhamento Definitiva
-        function compartilharSite(event) {
-            // Evita qualquer comportamento padrão do HTML (como adicionar o #)
-            if (event) event.preventDefault();
-
-            // Pega o link da página, mas tira qualquer "#" que já esteja lá
-            const urlAtual = window.location.href.split('#')[0];
-
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Cartão Digital - Conceição Queiroz',
-                    text: 'Confira o meu cartão de visitas digital!',
-                    url: urlAtual
-                }).catch(function(error) {
-                    console.log('Compartilhamento cancelado', error);
-                });
-            } else {
-                // Cria um campo falso para forçar a cópia
-                const inputFalso = document.createElement("input");
-                inputFalso.value = urlAtual;
-                document.body.appendChild(inputFalso);
-                
-                inputFalso.select();
-                inputFalso.setSelectionRange(0, 99999); // Para iPhone/Android
-                
-                try {
-                    document.execCommand("copy");
-                    alert("Link copiado para a área de transferência!");
-                } catch (err) {
-                    prompt("Copie o link abaixo:", urlAtual);
-                }
-                
-                document.body.removeChild(inputFalso);
-            }
-        }
-
-        // Script do Carrossel de Imóveis
-        const scrollContainer = document.getElementById('propertyScroll');
-        const dotsContainer = document.getElementById('carouselDots');
-        
-        if (scrollContainer && dotsContainer) {
-            const pages = scrollContainer.querySelectorAll('.property-page');
+        // O código aguarda o carregamento da página para injetar a função de forma segura
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnShare = document.getElementById('btnShare');
             
-            pages.forEach((_, index) => {
-                const dot = document.createElement('div');
-                dot.classList.add('dot');
-                if (index === 0) dot.classList.add('active');
-                dotsContainer.appendChild(dot);
-            });
+            if(btnShare) {
+                btnShare.addEventListener('click', async function(e) {
+                    e.preventDefault(); // Impede o salto da página e a adição do "#"
+                    
+                    const urlAtual = window.location.href.split('#')[0];
 
-            const dots = dotsContainer.querySelectorAll('.dot');
+                    // 1. Tenta abrir a gaveta nativa de compartilhamento (Celulares)
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: 'Cartão Digital - Conceição Queiroz',
+                                text: 'Confira o meu cartão de visitas digital!',
+                                url: urlAtual
+                            });
+                            return; 
+                        } catch (error) {
+                            console.log('Compartilhamento cancelado ou falhou.');
+                        }
+                    }
 
-            scrollContainer.addEventListener('scroll', () => {
-                const pageWidth = scrollContainer.clientWidth;
-                const scrollPosition = scrollContainer.scrollLeft;
-                const activeIndex = Math.round(scrollPosition / pageWidth);
-
-                dots.forEach((dot, index) => {
-                    if (index === activeIndex) {
-                        dot.classList.add('active');
+                    // 2. Fallback: Copia direto para a área de transferência silenciosamente
+                    if (navigator.clipboard && window.isSecureContext) {
+                        try {
+                            await navigator.clipboard.writeText(urlAtual);
+                            alert("Link copiado com sucesso!");
+                        } catch (err) {
+                            prompt("Copie o link abaixo:", urlAtual);
+                        }
                     } else {
-                        dot.classList.remove('active');
+                        // 3. Fallback final
+                        prompt("Copie o link abaixo:", urlAtual);
                     }
                 });
-            });
-        }
+            }
+
+            // Script do Carrossel de Imóveis
+            const scrollContainer = document.getElementById('propertyScroll');
+            const dotsContainer = document.getElementById('carouselDots');
+            
+            if (scrollContainer && dotsContainer) {
+                const pages = scrollContainer.querySelectorAll('.property-page');
+                
+                pages.forEach((_, index) => {
+                    const dot = document.createElement('div');
+                    dot.classList.add('dot');
+                    if (index === 0) dot.classList.add('active');
+                    dotsContainer.appendChild(dot);
+                });
+
+                const dots = dotsContainer.querySelectorAll('.dot');
+
+                scrollContainer.addEventListener('scroll', () => {
+                    const pageWidth = scrollContainer.clientWidth;
+                    const scrollPosition = scrollContainer.scrollLeft;
+                    const activeIndex = Math.round(scrollPosition / pageWidth);
+
+                    dots.forEach((dot, index) => {
+                        if (index === activeIndex) {
+                            dot.classList.add('active');
+                        } else {
+                            dot.classList.remove('active');
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

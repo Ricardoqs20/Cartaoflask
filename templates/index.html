@@ -96,7 +96,7 @@
                 <span>Website</span>
             </a>
             <div class="vertical-divider"></div>
-            <!-- Botão de Compartilhar corrigido -->
+            <!-- Botão de Compartilhar -->
             <a href="javascript:void(0);" onclick="compartilharSite()" class="action-item">
                 <i class="fa-solid fa-share-nodes icon"></i>
                 <span>Compartilhar</span>
@@ -105,38 +105,37 @@
     </div>
 
     <script>
-        // Função de Compartilhamento Robusta e Direta
+        // Função de Compartilhamento Definitiva
         function compartilharSite() {
             const urlAtual = window.location.href;
-            
+
+            // 1. Se o navegador suportar o menu nativo de compartilhamento (Celulares modernos)
             if (navigator.share) {
                 navigator.share({
                     title: 'Cartão Digital - Conceição Queiroz',
                     text: 'Confira o meu cartão de visitas digital!',
                     url: urlAtual
                 }).catch((error) => {
-                    console.log('Compartilhamento cancelado ou não suportado:', error);
-                    executarCopiaFallback(urlAtual);
+                    console.log('Compartilhamento cancelado', error);
                 });
             } else {
-                executarCopiaFallback(urlAtual);
+                // 2. Método ultra-compatível de cópia (Cria um campo invisível, seleciona e copia)
+                const aux = document.createElement("input");
+                aux.setAttribute("value", urlAtual);
+                document.body.appendChild(aux);
+                aux.select();
+                aux.setSelectionRange(0, 99999); // Para dispositivos móveis
+                
+                try {
+                    document.execCommand("copy");
+                    alert("Link copiado para a área de transferência!");
+                } catch (err) {
+                    // 3. Se falhar por completo, abre o prompt para o usuário copiar manualmente
+                    prompt("Copie o link abaixo:", urlAtual);
+                }
+                
+                document.body.removeChild(aux);
             }
-        }
-
-        function executarCopiaFallback(texto) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(texto).then(() => {
-                    alert('Link copiado para a área de transferência!');
-                }).catch(() => {
-                    forcarPromptManual(texto);
-                });
-            } else {
-                forcarPromptManual(texto);
-            }
-        }
-
-        function forcarPromptManual(texto) {
-            prompt("Copie o link abaixo:", texto);
         }
 
         // Script do Carrossel de Imóveis
